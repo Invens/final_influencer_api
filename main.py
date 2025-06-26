@@ -4,24 +4,17 @@ from pydantic import BaseModel
 from estimator import estimate_influencer_pay
 from scraper import InstagramPublicScraper
 
-# Create FastAPI app
 app = FastAPI(title="Influencer Estimation API")
 
-# CORS settings — update your domain(s) below
-origins = [
-    "http://localhost:3000",       # for local development
-    "https://fluencerz.com/"     # replace with your actual deployed domain
-]
-
+# Allow all origins (safely with regex if credentials required)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origin_regex=".*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Request body model
 class EstimateRequest(BaseModel):
     username: str
     niche: str

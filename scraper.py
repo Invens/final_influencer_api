@@ -6,11 +6,32 @@ from datetime import datetime
 class InstagramPublicScraper:
     def __init__(self):
         self.session = requests.Session()
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'X-IG-App-ID': '936619743392459',
-        }
+        
+        # 🎯 Official IG frontend App ID
+        self.ig_app_id = '936619743392459'
+
+        # 🔁 Rotating real-world User-Agent headers
+        self.user_agents = [
+            # Desktop Chrome
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/114.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/113.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/110.0.0.0 Safari/537.36',
+
+            # Mobile Chrome
+            'Mozilla/5.0 (Linux; Android 10; SM-G970F) AppleWebKit/537.36 Chrome/103.0.5060.70 Mobile Safari/537.36',
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 Version/14.0 Mobile Safari/604.1',
+
+            # Safari
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/605.1.15 Version/13.1.2 Safari/605.1.15',
+            'Mozilla/5.0 (iPad; CPU OS 13_2 like Mac OS X) AppleWebKit/605.1.15 Version/13.0 Mobile Safari/604.1',
+
+            # Firefox
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0',
+            'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:99.0) Gecko/20100101 Firefox/99.0',
+
+            # Edge
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/113.0.1774.50 Safari/537.36 Edg/113.0.1774.50'
+        ]
 
     def random_delay(self):
         time.sleep(random.uniform(2, 5))
@@ -18,8 +39,14 @@ class InstagramPublicScraper:
     def get_public_profile(self, username):
         self.random_delay()
         try:
+            headers = {
+                'User-Agent': random.choice(self.user_agents),
+                'Accept-Language': 'en-US,en;q=0.9',
+                'X-IG-App-ID': self.ig_app_id,
+                'Referer': f'https://www.instagram.com/{username}/'
+            }
             url = f"https://i.instagram.com/api/v1/users/web_profile_info/?username={username}"
-            res = self.session.get(url, headers=self.headers)
+            res = self.session.get(url, headers=headers)
             if res.status_code != 200:
                 return {"error": f"Request failed: {res.status_code}"}
             user = res.json()["data"]["user"]
