@@ -31,34 +31,39 @@ def scrape_instagram_profile(username):
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()
             page.goto(f"https://www.instagram.com/{username}/", timeout=15000)
-            page.wait_for_selector("img", timeout=10000)
+            page.wait_for_selector("meta[name='description']", timeout=10000)
 
+            desc = page.locator("meta[name='description']").get_attribute("content")
             title = page.title()
-            bio = page.locator("meta[name='description']").get_attribute("content") or ""
+            profile_pic = page.locator("img").first.get_attribute("src")
 
-            # Instagram profile JSON embedded in <script type="application/ld+json">
-            json_script = page.locator("script[type='application/ld+json']").first.inner_text()
-            import json
-            profile_json = json.loads(json_script)
+            import re
+            match = re.search(r"([\d\.]+)([MK]?) Followers", desc)
+            if not match:
+                raise Exception("Could not parse followers from description.")
 
-            followers = int(profile_json.get("mainEntityofPage", {}).get("interactionStatistic", [{}])[0].get("userInteractionCount", 0))
-            full_name = profile_json.get("name", username)
-            profile_pic = profile_json.get("image")
+            number = float(match.group(1))
+            suffix = match.group(2)
+            followers = (
+                int(number * 1_000_000) if suffix == "M"
+                else int(number * 1_000) if suffix == "K"
+                else int(number)
+            )
 
-            browser.close()
             return {
                 "username": username,
-                "full_name": full_name,
+                "full_name": title.split("•")[0].strip(),
                 "followers": followers,
                 "following": 0,
                 "posts": 0,
                 "is_private": False,
                 "profile_pic": profile_pic,
-                "bio": bio,
+                "bio": desc,
                 "external_url": None,
                 "last_updated": datetime.now().isoformat(),
-                "recent_posts": []  # Skipped for now
+                "recent_posts": []
             }
+
     except Exception as e:
         return {"error": str(e)}
 
